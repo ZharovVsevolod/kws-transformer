@@ -1,0 +1,18 @@
+model:
+  name: transformer_kws
+  layers: 12
+  heads: 1
+  mlp_dim: 256
+  num_output_classes: 4
+  embedding_dim: 64
+  norm_type: postnorm
+
+data:
+  time_window: 20
+  frequency: 128
+  patch_size_t: 5
+  patch_size_f: 16
+
+training:
+  batch: 2
+  lr: 3e-4
