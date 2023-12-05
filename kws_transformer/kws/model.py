@@ -5,6 +5,7 @@ from torch.nn import functional as F
 import einops
 import lightning as L
 from torchmetrics.classification import MulticlassAccuracy
+from nnAudio.features.mel import MFCC
 
 class PatchEmbedding_for_audio(nn.Module):
     def __init__(self, time_window:int, frequency:int, patch_size_t:int, patch_size_f:int, embed_dim:int) -> None:
@@ -30,7 +31,7 @@ class PatchEmbedding_for_audio(nn.Module):
         try:
             audio = einops.rearrange(audio, "b t f -> b 1 t f", t = self.T, f = self.F)
         except Exception:
-            print(f"Что-то там с вашими размерностями, надо {self.T}x{self.F}")
+            print(f"Что-то там с вашими размерностями, надо {self.T}x{self.F}, а у вас - {audio.shape}")
         
         # Применяем линейный слой
         patches = self.patch_embeddings(audio)
@@ -227,6 +228,7 @@ class ViT_Lightning(L.LightningModule):
             lr:float,
             qkv_bias=False, drop_rate=0.0,
             type_of_scheduler:str = "ReduceOnPlateau", patience_reduce:int = 5, factor_reduce:float=0.1, lr_coef_cycle:int = 2, total_num_of_epochs:int = 20,
+            sample_rate:int = 16000, n_mffc:int = 128, n_mels:int = 128, n_fft:int = 480, hop_length:int=160,
             previous_model = None
         ) -> None:
         super().__init__()
@@ -248,7 +250,39 @@ class ViT_Lightning(L.LightningModule):
         self.lr_coef_cycle = lr_coef_cycle
         self.total_num_of_epochs = total_num_of_epochs
 
+        self.mfcc_layer = MFCC(
+            sr=sample_rate,
+            n_mfcc=n_mffc,
+            n_mels=n_mels,
+            n_fft=n_fft,
+            hop_length=hop_length
+        )
+
         self.save_hyperparameters()
+    
+    def labels_translate(self, y):
+        """Немного костылей здесь :) Пока что
+
+        30 -   up   - 0
+        34 -  zero  - 1
+        3  -  cat   - 2
+        xx - others - 3
+        """
+
+        y_new = torch.zeros_like(y)
+
+        for i in range(len(y)):
+            match y[i]:
+                case 30:
+                    y_new[i] = 0
+                case 34:
+                    y_new[i] = 1
+                case 3:
+                    y_new[i] = 2
+                case _:
+                    y_new[i] = 3
+        
+        return y_new
 
     def forward(self, x):
         return self.vit_model(x)
@@ -269,7 +303,11 @@ class ViT_Lightning(L.LightningModule):
     def training_step(self, batch) -> STEP_OUTPUT:
         x, y = batch
 
+        x = self.mfcc_layer(x)
+        x = einops.rearrange(x, "b f t -> b t f")
+
         out = self(x)[:,-1,:]
+        y = self.labels_translate(y)
         pred_loss = self.loss(out, y)
         
         self.log("train_loss", pred_loss)
@@ -280,7 +318,11 @@ class ViT_Lightning(L.LightningModule):
     def validation_step(self, batch) -> STEP_OUTPUT:
         x, y = batch
 
+        x = self.mfcc_layer(x)
+        x = einops.rearrange(x, "b f t -> b t f")
+
         out = self(x)[:,-1,:]
+        y = self.labels_translate(y)
         pred_loss = self.loss(out, y)
 
         self.log("val_loss", pred_loss)

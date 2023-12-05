@@ -8,11 +8,26 @@ model:
   norm_type: postnorm
 
 data:
-  time_window: 20
+  time_window: 101
   frequency: 128
   patch_size_t: 5
   patch_size_f: 16
 
 training:
-  batch: 2
+  batch: 32
   lr: 3e-4
+  save_dir_tr: ./outputs/trainer
+  save_dir_wandb: ./outputs/wandb
+  model_path: ./outputs/models
+  epochs: 20
+
+dataset:
+  sample_rate: 16000
+  destination: ./kws_transformer/dataset
+
+mfcc_settings:
+  sample_rate: 16000
+  n_mfcc: 128
+  n_mels: 128
+  n_fft: 480
+  hop_length: 160
