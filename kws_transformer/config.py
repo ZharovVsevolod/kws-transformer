@@ -10,6 +10,7 @@ class Model:
     num_output_classes: int
     embedding_dim: int
     norm_type: Literal["postnorm", "prenorm"]
+    dropout: float
 
 @dataclass
 class Data:

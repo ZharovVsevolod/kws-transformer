@@ -263,10 +263,18 @@ class ViT_Lightning(L.LightningModule):
     def labels_translate(self, y):
         """Немного костылей здесь :) Пока что
 
-        30 -   up   - 0
-        34 -  zero  - 1
-        3  -  cat   - 2
-        xx - others - 3
+        30  up      0
+        34  zero    1
+        3   cat     2
+        4   dog     3
+        22  right   4
+        11  go      5
+        33  yes     6
+        18  no      7
+        28  three   8
+        9   forward 9
+        16  marvin  10
+        xx  others  11
         """
 
         y_new = torch.zeros_like(y)
@@ -279,8 +287,24 @@ class ViT_Lightning(L.LightningModule):
                     y_new[i] = 1
                 case 3:
                     y_new[i] = 2
-                case _:
+                case 4:
                     y_new[i] = 3
+                case 22:
+                    y_new[i] = 4
+                case 11:
+                    y_new[i] = 5
+                case 33:
+                    y_new[i] = 6
+                case 18:
+                    y_new[i] = 7
+                case 28:
+                    y_new[i] = 8
+                case 9:
+                    y_new[i] = 9
+                case 16:
+                    y_new[i] = 10
+                case _:
+                    y_new[i] = 11
         
         return y_new
 
@@ -332,7 +356,7 @@ class ViT_Lightning(L.LightningModule):
         pass
     
     def configure_optimizers(self) -> OptimizerLRScheduler:
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr, weight_decay=0.1)
         scheduler_dict = self.lr_scheduler(optimizer)
         return (
             {'optimizer': optimizer, 'lr_scheduler': scheduler_dict}

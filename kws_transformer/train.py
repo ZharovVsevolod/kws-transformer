@@ -55,22 +55,28 @@ def main(cfg: Params) -> None:
         norm_type=cfg.model.norm_type,
         lr=cfg.training.lr,
         qkv_bias=False,
-        drop_rate=0.0,
+        drop_rate=cfg.model.dropout,
         type_of_scheduler = "ReduceOnPlateau", 
         patience_reduce = 5, 
         factor_reduce = 0.1, 
-        lr_coef_cycle = None, 
-        total_num_of_epochs = None,
+        # type_of_scheduler = "OneCycleLR",
+        # lr_coef_cycle = 1, 
+        # total_num_of_epochs = cfg.training.epochs,
+        sample_rate = cfg.mfcc_settings.sample_rate, 
+        n_mffc = cfg.mfcc_settings.n_mfcc, 
+        n_mels = cfg.mfcc_settings.n_mels, 
+        n_fft = cfg.mfcc_settings.n_fft, 
+        hop_length=cfg.mfcc_settings.hop_length,
         previous_model = None
     )
 
     wandb.login(key="dec2ee769ce2e455dd463be9b11767cf8190d658")
-    wandb_log = WandbLogger(project="KWS", name="kws-1", save_dir=cfg.training.save_dir_wandb)
+    wandb_log = WandbLogger(project="KWS", name="kws12-h1-l12-post-mel40/80-p15/10-d01", save_dir=cfg.training.save_dir_wandb)
 
     checkpoint = ModelCheckpoint(
         dirpath=cfg.training.model_path,
         save_top_k=3,
-        monitor="val_acc"
+        monitor="val_loss"
     )
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
 
@@ -81,7 +87,7 @@ def main(cfg: Params) -> None:
         logger=wandb_log,
         callbacks=[checkpoint, lr_monitor],
         default_root_dir=cfg.training.save_dir_tr,
-        fast_dev_run=5
+        # fast_dev_run=5
     )
     trainer.fit(model=model, datamodule=dm)
 
@@ -89,4 +95,5 @@ def main(cfg: Params) -> None:
 
 
 if __name__ == "__main__":
+    L.seed_everything(1702)
     main()

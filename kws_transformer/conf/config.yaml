@@ -1,25 +1,26 @@
 model:
   name: transformer_kws
   layers: 12
-  heads: 1
-  mlp_dim: 256
-  num_output_classes: 4
-  embedding_dim: 64
+  heads: 2
+  mlp_dim: 512
+  num_output_classes: 12
+  embedding_dim: 128
   norm_type: postnorm
+  dropout: 0.1
 
 data:
   time_window: 101
-  frequency: 128
-  patch_size_t: 5
-  patch_size_f: 16
+  frequency: 40
+  patch_size_t: 15
+  patch_size_f: 10
 
 training:
-  batch: 32
+  batch: 512
   lr: 3e-4
   save_dir_tr: ./outputs/trainer
   save_dir_wandb: ./outputs/wandb
   model_path: ./outputs/models
-  epochs: 20
+  epochs: 15
 
 dataset:
   sample_rate: 16000
@@ -27,7 +28,7 @@ dataset:
 
 mfcc_settings:
   sample_rate: 16000
-  n_mfcc: 128
-  n_mels: 128
+  n_mfcc: 40
+  n_mels: 80
   n_fft: 480
   hop_length: 160

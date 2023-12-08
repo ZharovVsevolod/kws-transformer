@@ -45,15 +45,6 @@ class AudioDataset(Dataset):
             self.labels = sorted(list(set(datapoint[2] for datapoint in self.audio_set)))
         else:
             self.labels = labels
-        # [
-        #     'backward', 'bed', 'bird', 'cat', 'dog', 
-        #     'down', 'eight', 'five', 'follow', 'forward', 
-        #     'four', 'go', 'happy', 'house', 'learn', 
-        #     'left', 'marvin', 'nine', 'no', 'off', 
-        #     'on', 'one', 'right', 'seven', 'sheila', 
-        #     'six', 'stop', 'three', 'tree', 'two', 
-        #     'up', 'visual', 'wow', 'yes', 'zero'
-        # ]
     
     def __len__(self):
         return len(self.audio_set)
@@ -82,7 +73,7 @@ class Audio_DataModule(L.LightningDataModule):
         self.labels = labels
     
     def prepare_data(self) -> None:
-        _ = AudioDataset(
+        AudioDataset(
             destination=self.destination, 
             set_type=None, 
             audio_rate=self.audio_rate, 
@@ -116,27 +107,3 @@ class Audio_DataModule(L.LightningDataModule):
             shuffle=False,
             batch_size=self.batch_size
         )
-
-def nice_try():
-    train_set = AudioDataset("./kws_transformer/dataset", "training")
-
-    mfcc_layer = MFCC(
-        sr=16000,
-        n_mfcc=128,
-        n_mels=128,
-        n_fft=480,
-        hop_length=160
-    )
-
-    for i in [1, 4000, 15000]:
-        waveform, label = train_set[i]
-        print(waveform.shape)
-        print(label)
-        wave = mfcc_layer(waveform)
-
-        print(wave.shape)
-
-    # wave_plot = einops.rearrange(wave, "1 f t -> f t")
-
-    # plt.plot(wave_plot)
-    # plt.show()

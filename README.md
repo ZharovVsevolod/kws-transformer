@@ -5,3 +5,5 @@
 
 
 Реализовано с помощью трансформера  
+
+[Ссылка](https://wandb.ai/lost_in_thoughts/KWS?workspace=user-wsewolod) на прогонку на Weights and Biases
