@@ -2,3 +2,5 @@
 /kws_transformer/kws/__pycache__
 /outputs
 /kws_transformer/dataset
+/kws_transformer/kws/preprocessing_data/__pycache__
+/kws_transformer/some_tests.py

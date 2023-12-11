@@ -3,7 +3,6 @@
 
 **Описание задачи**: Человек говорит фразу, если во фразе втречаются ключевые слова, они маркируются. Должно работать в прямом эфире или с небольшой (1 сек.) задержкой
 
-
 Реализовано с помощью трансформера  
 
-[Ссылка](https://wandb.ai/lost_in_thoughts/KWS?workspace=user-wsewolod) на прогонку на Weights and Biases
+[Ссылка](https://wandb.ai/lost_in_thoughts/KWS) на прогонку на Weights and Biases

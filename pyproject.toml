@@ -17,6 +17,7 @@ sox = "^1.4.1"
 nnaudio = "^0.3.2"
 matplotlib = "^3.8.2"
 wandb = "^0.16.1"
+scikit-learn = "^1.3.2"
 
 
 [[tool.poetry.source]]

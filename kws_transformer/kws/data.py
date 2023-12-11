@@ -10,6 +10,7 @@ from nnAudio.features.mel import MFCC
 from typing import Literal
 from torch.nn.utils.rnn import pad_sequence
 import lightning as L
+from kws.preprocessing_data.preproccesing import SpeechCommandsData
 
 class SubsetSC(SPEECHCOMMANDS):
     def __init__(self, dest, subset: str = None):
@@ -107,3 +108,37 @@ class Audio_DataModule(L.LightningDataModule):
             shuffle=False,
             batch_size=self.batch_size
         )
+
+class NewEra_AudioDataModule(L.LightningDataModule):
+    def __init__(self, data_destination, batch_size, n_mfcc, hop_length) -> None:
+        super().__init__()
+
+        self.data_destination = data_destination
+        self.batch_size = batch_size
+        self.n_mfcc = n_mfcc
+        self.hop_length = hop_length
+    
+    def prepare_data(self) -> None:
+        self.sc_data = SpeechCommandsData(
+            path=self.data_destination, 
+            train_bs=self.batch_size, 
+            test_bs=self.batch_size, 
+            val_bs=self.batch_size, 
+            n_mels=self.n_mfcc,
+            hop_length=self.hop_length
+        )
+        
+    def setup(self, stage: str) -> None:
+        if stage == "fit" or stage is None:
+            pass
+        if stage == "test" or stage is None:
+            pass
+    
+    def train_dataloader(self) -> TRAIN_DATALOADERS:
+        return self.sc_data.train_loader
+    
+    def val_dataloader(self) -> EVAL_DATALOADERS:
+        return self.sc_data.val_loader
+    
+    def test_dataloader(self) -> EVAL_DATALOADERS:
+        return self.sc_data.test_loader
