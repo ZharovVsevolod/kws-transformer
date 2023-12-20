@@ -474,4 +474,5 @@ class ConfMatrixLogging(L.Callback):
 
     def on_validation_epoch_end(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
         trainer.logger.log_image(key="Validation Confusion Matrix", images=self.make_img_matrix(pl_module.conf_matrix))
+        plt.close()
         pl_module.flag_cm = True

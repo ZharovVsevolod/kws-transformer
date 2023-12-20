@@ -20,7 +20,7 @@ training:
   save_dir_tr: ./outputs/trainer
   save_dir_wandb: ./outputs/wandb
   model_path: ./outputs/models
-  epochs: 15
+  epochs: 50
 
 dataset:
   sample_rate: 16000

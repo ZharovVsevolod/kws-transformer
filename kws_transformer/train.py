@@ -1,11 +1,11 @@
-from kws.model import ViT_Lightning, AudioConv, ConfMatrixLogging
+from kws.model import ViT_Lightning, ConfMatrixLogging
 from kws.data import Audio_DataModule, NewEra_AudioDataModule
 from kws.preprocessing_data.preproccesing import KNOWN_COMMANDS
 
 import lightning as L
 from lightning.pytorch.loggers import WandbLogger
 import wandb
-from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor
+from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor, EarlyStopping
 
 import hydra
 from hydra.core.config_store import ConfigStore
@@ -42,6 +42,8 @@ def main(cfg: Params) -> None:
     #     audio_rate=cfg.dataset.sample_rate,
     #     labels=get_labels()
     # )
+
+    working_dir = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
 
     dm = NewEra_AudioDataModule(
         data_destination=cfg.dataset.destination,
@@ -83,15 +85,16 @@ def main(cfg: Params) -> None:
     )
 
     wandb.login(key="dec2ee769ce2e455dd463be9b11767cf8190d658")
-    wandb_log = WandbLogger(project="KWS", name="NEW-kws10-h2-l12-post-f40-p20/8-rop(3e-4)", save_dir=cfg.training.save_dir_wandb)
+    wandb_log = WandbLogger(project="KWS", name="Final-h2-l12-pre-emb256/512-p20/8-rop(3e-4)", save_dir=working_dir + "/wandb")
 
     checkpoint = ModelCheckpoint(
-        dirpath=cfg.training.model_path,
+        dirpath=working_dir + "/weights",
         save_top_k=3,
         monitor="val_loss"
     )
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
     conf_matrix_logger = ConfMatrixLogging(KNOWN_COMMANDS)
+    # early_stop = EarlyStopping(monitor="val_loss", patience=7)
 
     trainer = L.Trainer(
         max_epochs=cfg.training.epochs,
@@ -99,7 +102,6 @@ def main(cfg: Params) -> None:
         devices=1,
         logger=wandb_log,
         callbacks=[checkpoint, lr_monitor, conf_matrix_logger],
-        default_root_dir=cfg.training.save_dir_tr,
         # fast_dev_run=5
     )
     trainer.fit(model=model, datamodule=dm)
