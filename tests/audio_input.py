@@ -7,7 +7,6 @@ import time
 import torch
 import onnxruntime as ort
 from WaveformToSpectrogram import WaveformToSpectrogram as WTS
-
 KNOWN_COMMANDS = [
     "yes",
     "no",
