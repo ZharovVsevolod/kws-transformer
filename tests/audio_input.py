@@ -7,7 +7,19 @@ import time
 import torch
 import onnxruntime as ort
 from WaveformToSpectrogram import WaveformToSpectrogram as WTS
-from kws_transformer.kws.preprocessing_data.preproccesing import KNOWN_COMMANDS
+KNOWN_COMMANDS = [
+    "yes",
+    "no",
+    "up",
+    "down",
+    "left",
+    "right",
+    "on",
+    "off",
+    "stop",
+    "go",
+    "background"
+]
 
 class AudioInput:
     def __init__(
