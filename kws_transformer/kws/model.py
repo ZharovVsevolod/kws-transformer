@@ -7,7 +7,7 @@ from torch.nn import functional as F
 import einops
 import lightning as L
 from torchmetrics.classification import MulticlassAccuracy, ConfusionMatrix
-from nnAudio.features.mel import MFCC
+# from nnAudio.features.mel import MFCC
 import matplotlib.pyplot as plt
 import itertools
 import numpy as np
@@ -263,16 +263,16 @@ class ViT_Lightning(L.LightningModule):
         self.total_num_of_epochs = total_num_of_epochs
         
         self.need_mfcc = need_mfcc
-        if self.need_mfcc:
-            self.mfcc_layer = MFCC(
-                sr=sample_rate,
-                n_mfcc=n_mffc,
-                n_mels=n_mels,
-                n_fft=n_fft,
-                hop_length=hop_length,
-                # trainable_mel=True,
-                # trainable_STFT=True
-            )
+        # if self.need_mfcc:
+        #     self.mfcc_layer = MFCC(
+        #         sr=sample_rate,
+        #         n_mfcc=n_mffc,
+        #         n_mels=n_mels,
+        #         n_fft=n_fft,
+        #         hop_length=hop_length,
+        #         # trainable_mel=True,
+        #         # trainable_STFT=True
+        #     )
 
         self.save_hyperparameters()
     
@@ -387,13 +387,13 @@ class AudioConv(L.LightningModule):
             nn.Linear(in_features=128, out_features=35)
         )
 
-        self.mfcc_layer = MFCC(
-            sr=16000,
-            n_mfcc=40,
-            n_mels=80,
-            n_fft=480,
-            hop_length=161
-        )
+        # self.mfcc_layer = MFCC(
+        #     sr=16000,
+        #     n_mfcc=40,
+        #     n_mels=80,
+        #     n_fft=480,
+        #     hop_length=161
+        # )
 
         self.metric = MulticlassAccuracy(num_classes=35)
 
