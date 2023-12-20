@@ -1,0 +1,109 @@
+import sys
+from PyQt6 import QtWidgets
+from PyQt6.QtWidgets import QWidget
+from PyQt6.QtGui import QPalette, QColor
+
+from PyQt6.QtCore import QThread
+
+from for_app import design
+from for_app.audio_input_ui import AudioInput
+import onnxruntime as ort
+
+COLORS = [
+    "green",
+    "red",
+    "blue",
+    "yellow",
+    "magenta",
+    "black",
+    "cyan",
+    "darkMagenta",
+    "darkRed",
+    "darkgreen",
+    "grey"
+]
+
+KNOWN_COMMANDS = [
+    "yes",
+    "no",
+    "up",
+    "down",
+    "left",
+    "right",
+    "on",
+    "off",
+    "stop",
+    "go",
+    "background"
+]
+
+class Color(QWidget):
+    def __init__(self, color):
+        super(Color, self).__init__()
+        self.setAutoFillBackground(True)
+
+        palette = self.palette()
+        palette.setColor(QPalette.ColorRole.Window, QColor(color))
+        self.setPalette(palette)
+
+
+class MyApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
+    def __init__(self) -> None:
+        super().__init__()
+        self.setupUi(self)
+
+        self.pushButton.clicked.connect(self.button_clicked)
+        self.verticalLayout.addWidget(Color("white"))
+        self.label.setText("Запись не начата")
+    
+    def init_ort_session(self):
+        #-----onnx-----
+        save_onnx = "final_weights/model.onnx"
+        self.ort_session = ort.InferenceSession(save_onnx)
+
+    
+    def init_audio_input(self):
+        #-----Audio-----
+        self.audio_recording_thread = QThread()
+        self.audio = AudioInput(
+            sleep_time=30, 
+            save=True, 
+            ort_session=self.ort_session,
+            print_answer=False
+        )
+        self.audio.moveToThread(self.audio_recording_thread)
+        self.audio.signal.connect(self.update_texts)
+
+        self.audio_recording_thread.started.connect(self.audio.record)        
+
+    def update_texts(self, class_token):
+        self.verticalLayout.itemAt(0).widget().setParent(None)
+        self.verticalLayout.addWidget(Color(COLORS[class_token]))
+        self.label.setText(KNOWN_COMMANDS[class_token])
+    
+    def button_clicked(self):
+        self.init_audio_input()
+        print("Start recording")
+        self.audio_recording_thread.start()
+        self.pushButton.setText("Закрыть окно")
+        # self.pushButton.clicked.connect(self.button_update)
+    
+    def button_update(self):
+        self.audio.stop()
+        self.audio_recording_thread.quit()
+        self.audio_recording_thread.wait()
+        self.pushButton.setText("Начать запись")
+        self.pushButton.clicked.connect(self.button_clicked)
+
+
+def main():
+    app = QtWidgets.QApplication(sys.argv)
+    window = MyApp()
+    window.show()
+
+    window.init_ort_session()
+
+    app.exec()
+
+if __name__ == "__main__":
+    main()

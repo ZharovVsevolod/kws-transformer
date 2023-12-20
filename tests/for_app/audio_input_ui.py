@@ -8,6 +8,8 @@ import torch
 import onnxruntime as ort
 from WaveformToSpectrogram import WaveformToSpectrogram as WTS
 
+from PyQt6.QtCore import QObject, pyqtSignal
+
 KNOWN_COMMANDS = [
     "yes",
     "no",
@@ -22,8 +24,12 @@ KNOWN_COMMANDS = [
     "background"
 ]
 
-class AudioInput:
-    def __init__(self, sleep_time=10, save=True, ort_session = None):
+class AudioInput(QObject):
+    #-----Для отрисовки-----
+    signal = pyqtSignal(int)
+
+    def __init__(self, sleep_time=10, save=True, ort_session = None, print_answer=True):
+        super().__init__()
         self.sleep_time = sleep_time  # сколько секунд нужно записать
         self.save = save  # сохранить ли файл
         # Setup channel infot
@@ -37,6 +43,7 @@ class AudioInput:
         self.full_data = torch.empty(0, dtype=torch.float16)
         self.torch_data = torch.empty(0, dtype=torch.float32)
         #-----Отдел модели-------
+        self.print_answer = print_answer
         self.ort_session = ort_session
         if ort_session is not None:
             self.input_name = self.ort_session.get_inputs()[0].name
@@ -46,6 +53,7 @@ class AudioInput:
             n_mels=40,
             hop_length=161
         )
+        self.flag_early_stop = True
 
     def callback(self, in_data, frame_count, time_info, flag):
         self.full_data = torch.cat((self.full_data, torch.tensor(np.frombuffer(in_data, dtype=np.float32))))
@@ -61,7 +69,9 @@ class AudioInput:
                 input_name=self.input_name,
                 ort_session=self.ort_session
             )
-            print(class_answer, KNOWN_COMMANDS[class_answer])
+            if self.print_answer:
+                print(class_answer, KNOWN_COMMANDS[class_answer])
+            self.signal.emit(int(class_answer))
             #
         return in_data, pyaudio.paContinue
 
@@ -73,26 +83,40 @@ class AudioInput:
         wf.setframerate(self.RATE)
         wf.writeframes(b''.join(self.full_data.numpy()))
         wf.close()
+    
+    def stop(self):
+        self.stream.stop_stream()
+        print("Stream is stopped.")
+        # self.stream.close()
+        self.flag_early_stop = False
+        # self.p.terminate()
 
     def record(self):
-        stream = self.p.open(format=self.FORMAT,
-                             channels=self.CHANNELS,
-                             rate=self.RATE,
-                             input=True,
-                             frames_per_buffer=self.CHUNK,
-                             stream_callback=self.callback)
+        self.stream = self.p.open(
+            format=self.FORMAT,
+            channels=self.CHANNELS,
+            rate=self.RATE,
+            input=True,
+            frames_per_buffer=self.CHUNK,
+            stream_callback=self.callback
+        )
 
-        stream.start_stream()
+        self.stream.start_stream()
         print("Stream in progress...")
 
-        while stream.is_active():
+        while self.stream.is_active():
             time.sleep(self.sleep_time)
-            stream.stop_stream()
-            print("Stream is stopped.")
-
-        stream.close()
+            if self.flag_early_stop:
+                self.stream.stop_stream()
+                print("Stream is stopped.")
+        
+        # if self.flag_early_stop:
+        self.stream.close()
+        
         if self.save:
             self.save_input()
+        
+        # if self.flag_early_stop:
         self.p.terminate()
 
 def make_model_answer(input_sample, input_name, ort_session):
@@ -107,9 +131,13 @@ def start_record_and_answer():
     ort_session = ort.InferenceSession(save_onnx)
 
     # Класс по прослушке микрофона
-    a = AudioInput(sleep_time=10, save=True, ort_session=ort_session)
+    a = AudioInput(
+        sleep_time=20, 
+        save=True, 
+        ort_session=ort_session
+    )
     # Запись
     a.record()
 
-if __name__ == '__main__':
-    start_record_and_answer()
+# if __name__ == '__main__':
+#     start_record_and_answer()
