@@ -7,7 +7,20 @@ import time
 import torch
 import onnxruntime as ort
 from WaveformToSpectrogram import WaveformToSpectrogram as WTS
-from kws_transformer.kws.preprocessing_data.preproccesing import KNOWN_COMMANDS
+
+KNOWN_COMMANDS = [
+    "yes",
+    "no",
+    "up",
+    "down",
+    "left",
+    "right",
+    "on",
+    "off",
+    "stop",
+    "go",
+    "background"
+]
 
 class AudioInput:
     def __init__(
@@ -45,6 +58,7 @@ class AudioInput:
             #
             # вызов модуля для тензора audio_data
             print(audio_data.shape)
+            print(audio_data)
             wave = self.wts.preprocess_waveform(audio_data)
             print(wave.shape)
             wave = wave.unsqueeze(0)
@@ -60,7 +74,7 @@ class AudioInput:
         return in_data, pyaudio.paContinue
 
     def save_input(self):
-        wave_filename = time.strftime("%b_%d_%Y_%H-%M-%S", time.localtime()) + '_test.wav'
+        wave_filename = "outputs/audio/" + time.strftime("%b_%d_%Y_%H-%M-%S", time.localtime()) + '_test.wav'
         wf = wave.open(wave_filename, 'wb')
         wf.setnchannels(self.CHANNELS)
         wf.setsampwidth(self.p.get_sample_size(self.FORMAT))
@@ -101,8 +115,7 @@ def start_record_and_answer():
     ort_session = ort.InferenceSession(save_onnx)
 
     # Класс по прослушке микрофона
-    a = AudioInput(sleep_time=4, save=True, ort_session=ort_session)
-
+    a = AudioInput(sleep_time=10, save=True, ort_session=ort_session)
     # Запись
     a.record()
 
