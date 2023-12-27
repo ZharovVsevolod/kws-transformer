@@ -8,6 +8,9 @@ import torch
 import onnxruntime as ort
 from WaveformToSpectrogram import WaveformToSpectrogram as WTS
 
+import time
+from scipy import stats
+
 KNOWN_COMMANDS = [
     "yes",
     "no",
@@ -30,7 +33,8 @@ class AudioInput:
         self.FORMAT = pyaudio.paInt16  # data type format
         self.CHANNELS = 1  # number of channels
         self.RATE = 16000  # Sample Rate
-        self.CHUNK = 4000  # Block Size
+        # self.CHUNK = 4000  # Block Size - раз в 0.25 секунд
+        self.CHUNK = 1600  # Block Size - раз в 0.1 секунду
         self.FRAMES = 16000
         #
         self.p = pyaudio.PyAudio()
@@ -46,9 +50,14 @@ class AudioInput:
             n_mels=40,
             hop_length=161
         )
+        #-----Отдел счётчика-----
+        self.delay = 5
+        self.pc = 0
+        self.answers = []
 
     def callback(self, in_data, frame_count, time_info, flag):
         self.full_data = torch.cat((self.full_data, torch.tensor(np.frombuffer(in_data, dtype=np.float32))))
+        st = time.time()
         # Нормализация входного аудиопотока
         self.torch_data = torch.cat((self.torch_data, torch.from_numpy(np.frombuffer(in_data, dtype=np.int16).astype(np.float32)/32767.0)))
         if len(self.torch_data) >= self.FRAMES:
@@ -61,8 +70,16 @@ class AudioInput:
                 input_name=self.input_name,
                 ort_session=self.ort_session
             )
-            print(class_answer, KNOWN_COMMANDS[class_answer])
-            #
+            # print(class_answer, KNOWN_COMMANDS[class_answer], time.time() - st)
+            #----Отдел счётчика-----
+            self.answers.append(class_answer)
+            self.pc += 1
+            if self.pc == self.delay:
+                md = stats.mode(self.answers, keepdims=False).mode
+                print(f"Общий ответ - {KNOWN_COMMANDS[md]}")
+                self.answers = []
+                self.pc = 0
+            #-----
         return in_data, pyaudio.paContinue
 
     def save_input(self):

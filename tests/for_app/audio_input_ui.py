@@ -7,6 +7,7 @@ import time
 import torch
 import onnxruntime as ort
 from WaveformToSpectrogram import WaveformToSpectrogram as WTS
+from scipy import stats
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
@@ -28,7 +29,7 @@ class AudioInput(QObject):
     #-----Для отрисовки-----
     signal = pyqtSignal(int)
 
-    def __init__(self, sleep_time=10, save=True, ort_session = None, print_answer=True):
+    def __init__(self, sleep_time=10, delay=5, save=True, ort_session = None, print_answer=True):
         super().__init__()
         self.sleep_time = sleep_time  # сколько секунд нужно записать
         self.save = save  # сохранить ли файл
@@ -53,7 +54,10 @@ class AudioInput(QObject):
             n_mels=40,
             hop_length=161
         )
-        self.flag_early_stop = True
+        #-----Отдел счётчика-----
+        self.delay = delay
+        self.pc = 0
+        self.answers = []
 
     def callback(self, in_data, frame_count, time_info, flag):
         self.full_data = torch.cat((self.full_data, torch.tensor(np.frombuffer(in_data, dtype=np.float32))))
@@ -71,7 +75,18 @@ class AudioInput(QObject):
             )
             if self.print_answer:
                 print(class_answer, KNOWN_COMMANDS[class_answer])
-            self.signal.emit(int(class_answer))
+            # self.signal.emit(int(class_answer))
+
+            #----Отдел счётчика-----
+            self.answers.append(class_answer)
+            self.pc += 1
+            if self.pc == self.delay:
+                md = stats.mode(self.answers, keepdims=False).mode
+                if self.print_answer:
+                    print(f"Общий ответ - {KNOWN_COMMANDS[md]}")
+                self.signal.emit(md)
+                self.answers = []
+                self.pc = 0
             #
         return in_data, pyaudio.paContinue
 
@@ -83,13 +98,6 @@ class AudioInput(QObject):
         wf.setframerate(self.RATE)
         wf.writeframes(b''.join(self.full_data.numpy()))
         wf.close()
-    
-    def stop(self):
-        self.stream.stop_stream()
-        print("Stream is stopped.")
-        # self.stream.close()
-        self.flag_early_stop = False
-        # self.p.terminate()
 
     def record(self):
         self.stream = self.p.open(
@@ -106,17 +114,14 @@ class AudioInput(QObject):
 
         while self.stream.is_active():
             time.sleep(self.sleep_time)
-            if self.flag_early_stop:
-                self.stream.stop_stream()
-                print("Stream is stopped.")
+            self.stream.stop_stream()
+            print("Stream is stopped.")
         
-        # if self.flag_early_stop:
         self.stream.close()
         
         if self.save:
             self.save_input()
         
-        # if self.flag_early_stop:
         self.p.terminate()
 
 def make_model_answer(input_sample, input_name, ort_session):

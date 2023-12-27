@@ -66,7 +66,8 @@ class MyApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         #-----Audio-----
         self.audio_recording_thread = QThread()
         self.audio = AudioInput(
-            sleep_time=30, 
+            sleep_time=20,
+            delay=1,
             save=True, 
             ort_session=self.ort_session,
             print_answer=False
@@ -86,10 +87,9 @@ class MyApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         print("Start recording")
         self.audio_recording_thread.start()
         self.pushButton.setText("Закрыть окно")
-        # self.pushButton.clicked.connect(self.button_update)
+        self.pushButton.clicked.connect(self.button_update)
     
     def button_update(self):
-        self.audio.stop()
         self.audio_recording_thread.quit()
         self.audio_recording_thread.wait()
         self.pushButton.setText("Начать запись")
