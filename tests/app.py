@@ -55,6 +55,8 @@ class MyApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.pushButton.clicked.connect(self.button_clicked)
         self.verticalLayout.addWidget(Color("white"))
         self.label.setText("Запись не начата")
+
+        self.stream_running = False
     
     def init_ort_session(self):
         #-----onnx-----
@@ -65,6 +67,7 @@ class MyApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
     def init_audio_input(self):
         #-----Audio-----
         self.audio_recording_thread = QThread()
+        print("Mult")
         self.audio = AudioInput(
             sleep_time=int(self.lineEdit.text()),
             delay=int(self.lineEdit_2.text()),
@@ -83,17 +86,25 @@ class MyApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.label.setText(KNOWN_COMMANDS[class_token])
     
     def button_clicked(self):
-        self.init_audio_input()
-        print(f"Start recording for {self.lineEdit.text()} secods")
-        self.audio_recording_thread.start()
-        self.pushButton.setText("Закрыть окно")
-        self.pushButton.clicked.connect(self.button_update)
+        if not self.stream_running:
+            print("Add")
+            self.init_audio_input()
+            print(f"Start recording for {self.lineEdit.text()} secods")
+            self.audio_recording_thread.start()
+            self.stream_running = True
+            self.pushButton.setText("Остановить запись")
+            self.pushButton.clicked.connect(self.button_update)
     
     def button_update(self):
-        self.audio_recording_thread.quit()
-        self.audio_recording_thread.wait()
-        self.pushButton.setText("Начать запись")
-        self.pushButton.clicked.connect(self.button_clicked)
+        if self.stream_running:
+            print("Here")
+            self.audio_recording_thread.quit()
+            print("we")
+            self.audio_recording_thread.wait(5)
+            print("go")
+            self.stream_running = False
+            self.pushButton.setText("Начать запись")
+            self.pushButton.clicked.connect(self.button_clicked)
 
 
 def main():
