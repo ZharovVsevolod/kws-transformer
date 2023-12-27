@@ -37,7 +37,8 @@ class AudioInput(QObject):
         self.FORMAT = pyaudio.paInt16  # data type format
         self.CHANNELS = 1  # number of channels
         self.RATE = 16000  # Sample Rate
-        self.CHUNK = 4000  # Block Size
+        # self.CHUNK = 4000  # Block Size - каждые -.25 секунд
+        self.CHUNK = 1600  # Block Size - каждые 0.1 секунду
         self.FRAMES = 16000
         #
         self.p = pyaudio.PyAudio()
