@@ -61,13 +61,13 @@ class MyApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
     def init_ort_session(self):
         #-----onnx-----
         save_onnx = "final_weights/model.onnx"
-        self.ort_session = ort.InferenceSession(save_onnx)
+        self.ort_session = ort.InferenceSession(save_onnx, providers=["CUDAExecutionProvider"])
 
     
     def init_audio_input(self):
         #-----Audio-----
         self.audio_recording_thread = QThread()
-        print("Mult")
+        # print("Mult")
         self.audio = AudioInput(
             sleep_time=int(self.lineEdit.text()),
             delay=int(self.lineEdit_2.text()),
@@ -81,13 +81,14 @@ class MyApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.audio_recording_thread.started.connect(self.audio.record)        
 
     def update_texts(self, class_token):
-        self.verticalLayout.itemAt(0).widget().setParent(None)
-        self.verticalLayout.addWidget(Color(COLORS[class_token]))
-        self.label.setText(KNOWN_COMMANDS[class_token])
+        if self.stream_running:
+            self.verticalLayout.itemAt(0).widget().setParent(None)
+            self.verticalLayout.addWidget(Color(COLORS[class_token]))
+            self.label.setText(KNOWN_COMMANDS[class_token])
     
     def button_clicked(self):
         if not self.stream_running:
-            print("Add")
+            # print("Add")
             self.init_audio_input()
             print(f"Start recording for {self.lineEdit.text()} secods")
             self.audio_recording_thread.start()
@@ -97,11 +98,14 @@ class MyApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
     
     def button_update(self):
         if self.stream_running:
-            print("Here")
+            self.verticalLayout.itemAt(0).widget().setParent(None)
+            self.verticalLayout.addWidget(Color("white"))
+            self.label.setText("Запись не начата")
+            # print("Here")
             self.audio_recording_thread.quit()
-            print("we")
+            # print("we")
             self.audio_recording_thread.wait(5)
-            print("go")
+            # print("go")
             self.stream_running = False
             self.pushButton.setText("Начать запись")
             self.pushButton.clicked.connect(self.button_clicked)
