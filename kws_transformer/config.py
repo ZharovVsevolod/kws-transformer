@@ -14,37 +14,38 @@ class Model:
 
 @dataclass
 class Data:
+    path_to_data: str
+    sample_rate: int
     time_window: int
     frequency: int
-    patch_size_t: int
-    patch_size_f: int
+    patch_size_time: int
+    patch_size_freq: int
+    n_mels: int
+    hop_length: int
 
 @dataclass
 class Training:
     batch: int
     lr: float
-    save_dir_tr: str
-    save_dir_wandb: str
-    model_path: str
     epochs: int
+    model_path: str
+    wandb_path: str
+    project_name: str
+    train_name: str
+    save_best_of: int
+    checkpoint_monitor: Literal["val_loss", "val_acc"]
+    early_stopping_patience: int
 
 @dataclass
-class Dataset:
-    sample_rate: int
-    destination: str
-
-@dataclass
-class MFCC_Set:
-    sample_rate: int
-    n_mfcc: int
-    n_mels: int
-    n_fft: int
-    hop_length: int
+class Scheduler_train:
+    type_of_scheduler: Literal["ReduceOnPlateau", "OneCycleLR"]
+    patience_reduce: int
+    factor_reduce: float
+    lr_coef_cycle: int
 
 @dataclass
 class Params:
     model: Model
     data: Data
     training: Training
-    dataset: Dataset
-    mfcc_settings: MFCC_Set
+    scheduler_train: Scheduler_train

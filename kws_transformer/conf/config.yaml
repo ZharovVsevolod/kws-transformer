@@ -9,26 +9,29 @@ model:
   dropout: 0.1
 
 data:
+  path_to_data: ./dataset
+  sample_rate: 16000
   time_window: 100
   frequency: 40
-  patch_size_t: 20
-  patch_size_f: 8
+  patch_size_time: 20
+  patch_size_freq: 8
+  n_mels: 40
+  hop_length: 161
 
 training:
+  project_name: KWS
+  train_name: new_era_2024_1
   batch: 512
   lr: 3e-4
-  save_dir_tr: ./outputs/trainer
-  save_dir_wandb: ./outputs/wandb
-  model_path: ./outputs/models
   epochs: 50
+  model_path: /weights
+  wandb_path: /wandb
+  save_best_of: 3
+  checkpoint_monitor: val_loss
+  early_stopping_patience: 30
 
-dataset:
-  sample_rate: 16000
-  destination: ./kws_transformer/dataset
-
-mfcc_settings:
-  sample_rate: 16000
-  n_mfcc: 40
-  n_mels: 80
-  n_fft: 480
-  hop_length: 161
+scheduler_train:
+  type_of_scheduler: ReduceOnPlateau
+  patience_reduce: 5
+  factor_reduce: 0.1
+  lr_coef_cycle: 1

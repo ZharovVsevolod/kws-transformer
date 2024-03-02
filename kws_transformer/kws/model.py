@@ -1,5 +1,5 @@
-from typing import Any
-import lightning.pytorch as pl
+# from typing import Any
+# import lightning.pytorch as pl
 from lightning.pytorch.utilities.types import STEP_OUTPUT, OptimizerLRScheduler
 import torch
 from torch import nn
@@ -154,7 +154,7 @@ class Block(nn.Module):
     def forward(self, x):
         if self.norm_type == "prenorm":
             x_inner = self.norm1(x)
-            # Attetnion
+            # Attention
             x_inner = self.attention(x_inner)
             x = x_inner + x
 
@@ -237,18 +237,19 @@ class ViT_Lightning(L.LightningModule):
             lr:float,
             qkv_bias=False, drop_rate=0.0,
             type_of_scheduler:str = "ReduceOnPlateau", patience_reduce:int = 5, factor_reduce:float=0.1, lr_coef_cycle:int = 2, total_num_of_epochs:int = 20,
-            sample_rate:int = 16000, n_mffc:int = 128, n_mels:int = 128, n_fft:int = 480, hop_length:int=160,
-            previous_model = None, need_mfcc = False
+            # sample_rate:int = 16000, n_mffc:int = 128, n_mels:int = 128, n_fft:int = 480, hop_length:int=160,
+            # previous_model = None, 
+            # need_mfcc = False
         ) -> None:
         super().__init__()
-        if previous_model is None:
-            self.vit_model = ViT_audio(
-                time_window=time_window, frequency=frequency, patch_size_t=patch_size_t, patch_size_f=patch_size_f, embed_dim=embed_dim,
-                num_classes=num_classes, depth=depth, num_heads=num_heads, mlp_dim=mlp_dim,
-                norm_type=norm_type, qkv_bias=qkv_bias, drop_rate=drop_rate
-            )
-        else:
-            self.vit_model = previous_model
+        # if previous_model is None:
+        self.vit_model = ViT_audio(
+            time_window=time_window, frequency=frequency, patch_size_t=patch_size_t, patch_size_f=patch_size_f, embed_dim=embed_dim,
+            num_classes=num_classes, depth=depth, num_heads=num_heads, mlp_dim=mlp_dim,
+            norm_type=norm_type, qkv_bias=qkv_bias, drop_rate=drop_rate
+        )
+        # else:
+        #     self.vit_model = previous_model
         
         self.metric = MulticlassAccuracy(num_classes=num_classes)
         self.matrix = ConfusionMatrix(task = "multiclass", num_classes = num_classes)
@@ -262,7 +263,7 @@ class ViT_Lightning(L.LightningModule):
         self.lr_coef_cycle = lr_coef_cycle
         self.total_num_of_epochs = total_num_of_epochs
         
-        self.need_mfcc = need_mfcc
+        # self.need_mfcc = need_mfcc
         # if self.need_mfcc:
         #     self.mfcc_layer = MFCC(
         #         sr=sample_rate,
@@ -276,35 +277,35 @@ class ViT_Lightning(L.LightningModule):
 
         self.save_hyperparameters()
     
-    def labels_translate(self, y):
-        y_new = torch.zeros_like(y)
-        for i in range(len(y)):
-            match y[i]:
-                case 30:
-                    y_new[i] = 0 # up
-                case 34:
-                    y_new[i] = 1 # zero
-                case 3:
-                    y_new[i] = 2 # cat
-                case 4:
-                    y_new[i] = 3 # dog
-                case 22:
-                    y_new[i] = 4 # right
-                case 11:
-                    y_new[i] = 5 # go
-                case 33:
-                    y_new[i] = 6 # yes
-                case 18:
-                    y_new[i] = 7 # no
-                case 28:
-                    y_new[i] = 8 # three
-                case 9:
-                    y_new[i] = 9 # forward
-                case 16:
-                    y_new[i] = 10 # marvin
-                case _:
-                    y_new[i] = 11 # others
-        return y_new
+    # def labels_translate(self, y):
+    #     y_new = torch.zeros_like(y)
+    #     for i in range(len(y)):
+    #         match y[i]:
+    #             case 30:
+    #                 y_new[i] = 0 # up
+    #             case 34:
+    #                 y_new[i] = 1 # zero
+    #             case 3:
+    #                 y_new[i] = 2 # cat
+    #             case 4:
+    #                 y_new[i] = 3 # dog
+    #             case 22:
+    #                 y_new[i] = 4 # right
+    #             case 11:
+    #                 y_new[i] = 5 # go
+    #             case 33:
+    #                 y_new[i] = 6 # yes
+    #             case 18:
+    #                 y_new[i] = 7 # no
+    #             case 28:
+    #                 y_new[i] = 8 # three
+    #             case 9:
+    #                 y_new[i] = 9 # forward
+    #             case 16:
+    #                 y_new[i] = 10 # marvin
+    #             case _:
+    #                 y_new[i] = 11 # others
+    #     return y_new
 
     def forward(self, x):
         return self.vit_model(x)
@@ -316,6 +317,7 @@ class ViT_Lightning(L.LightningModule):
         if self.type_of_scheduler == "ReduceOnPlateau":
             sched = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=self.patience_reduce, factor=self.factor_reduce)
             scheduler_out = {"scheduler": sched, "monitor": "val_loss"}
+        
         if self.type_of_scheduler == "OneCycleLR":
             sched = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.lr * self.lr_coef_cycle, total_steps=self.total_num_of_epochs)
             scheduler_out = {"scheduler": sched}
@@ -325,8 +327,8 @@ class ViT_Lightning(L.LightningModule):
     def training_step(self, batch) -> STEP_OUTPUT:
         x, y = batch
 
-        if self.need_mfcc:
-            x = self.mfcc_layer(x)
+        # if self.need_mfcc:
+        #     x = self.mfcc_layer(x)
         # x = einops.rearrange(x, "b f t -> b t f")
 
         out = self(x)[:,-1,:]
@@ -341,8 +343,8 @@ class ViT_Lightning(L.LightningModule):
     def validation_step(self, batch) -> STEP_OUTPUT:
         x, y = batch
 
-        if self.need_mfcc:
-            x = self.mfcc_layer(x)
+        # if self.need_mfcc:
+        #     x = self.mfcc_layer(x)
         # x = einops.rearrange(x, "b f t -> b t f")
 
         out = self(x)[:,-1,:]
@@ -368,83 +370,83 @@ class ViT_Lightning(L.LightningModule):
             {'optimizer': optimizer, 'lr_scheduler': scheduler_dict}
         )
 
-class AudioConv(L.LightningModule):
-    def __init__(self) -> None:
-        super().__init__()
+# class AudioConv(L.LightningModule):
+#     def __init__(self) -> None:
+#         super().__init__()
 
-        self.model_cnv = nn.Sequential(
-            nn.Conv2d(1, 32, kernel_size=(8, 20)),
-            nn.BatchNorm2d(32),
-            nn.Conv2d(32, 8, kernel_size=(4, 10)),
-            nn.BatchNorm2d(8)
-        )
+#         self.model_cnv = nn.Sequential(
+#             nn.Conv2d(1, 32, kernel_size=(8, 20)),
+#             nn.BatchNorm2d(32),
+#             nn.Conv2d(32, 8, kernel_size=(4, 10)),
+#             nn.BatchNorm2d(8)
+#         )
 
-        self.flat = nn.Flatten()
+#         self.flat = nn.Flatten()
 
-        self.lin = nn.Sequential(
-            nn.Linear(in_features=17280, out_features=128),
-            nn.BatchNorm1d(128),
-            nn.Linear(in_features=128, out_features=35)
-        )
+#         self.lin = nn.Sequential(
+#             nn.Linear(in_features=17280, out_features=128),
+#             nn.BatchNorm1d(128),
+#             nn.Linear(in_features=128, out_features=35)
+#         )
 
-        # self.mfcc_layer = MFCC(
-        #     sr=16000,
-        #     n_mfcc=40,
-        #     n_mels=80,
-        #     n_fft=480,
-        #     hop_length=161
-        # )
+#         # self.mfcc_layer = MFCC(
+#         #     sr=16000,
+#         #     n_mfcc=40,
+#         #     n_mels=80,
+#         #     n_fft=480,
+#         #     hop_length=161
+#         # )
 
-        self.metric = MulticlassAccuracy(num_classes=35)
+#         self.metric = MulticlassAccuracy(num_classes=35)
 
-        self.save_hyperparameters()
+#         self.save_hyperparameters()
     
-    def forward(self, x):
-        x = self.model_cnv(x)
-        x = self.flat(x)
-        x = self.lin(x)
-        return x
+#     def forward(self, x):
+#         x = self.model_cnv(x)
+#         x = self.flat(x)
+#         x = self.lin(x)
+#         return x
 
-    def loss(self, y, y_hat):
-        return F.cross_entropy(y, y_hat)
+#     def loss(self, y, y_hat):
+#         return F.cross_entropy(y, y_hat)
 
-    def lr_scheduler(self, optimizer):
-        sched = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=6e-4, total_steps=15)
-        scheduler_out = {"scheduler": sched}
-        return scheduler_out
+#     def lr_scheduler(self, optimizer):
+#         sched = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=6e-4, total_steps=15)
+#         scheduler_out = {"scheduler": sched}
+#         return scheduler_out
 
-    def training_step(self, batch) -> STEP_OUTPUT:
-        x, y = batch
+#     def training_step(self, batch) -> STEP_OUTPUT:
+#         x, y = batch
 
-        x = self.mfcc_layer(x)
-        x = einops.rearrange(x, "b f t -> b 1 f t")
+#         x = self.mfcc_layer(x)
+#         x = einops.rearrange(x, "b f t -> b 1 f t")
 
-        out = self(x)
-        pred_loss = self.loss(out, y)
+#         out = self(x)
+#         pred_loss = self.loss(out, y)
         
-        self.log("train_loss", pred_loss)
-        self.log("train_acc", self.metric(out, y))
+#         self.log("train_loss", pred_loss)
+#         self.log("train_acc", self.metric(out, y))
         
-        return pred_loss
+#         return pred_loss
     
-    def validation_step(self, batch) -> STEP_OUTPUT:
-        x, y = batch
+#     def validation_step(self, batch) -> STEP_OUTPUT:
+#         x, y = batch
 
-        x = self.mfcc_layer(x)
-        x = einops.rearrange(x, "b f t -> b 1 f t")
+#         x = self.mfcc_layer(x)
+#         x = einops.rearrange(x, "b f t -> b 1 f t")
 
-        out = self(x)
-        pred_loss = self.loss(out, y)
+#         out = self(x)
+#         pred_loss = self.loss(out, y)
         
-        self.log("val_loss", pred_loss)
-        self.log("val_acc", self.metric(out, y))
+#         self.log("val_loss", pred_loss)
+#         self.log("val_acc", self.metric(out, y))
     
-    def configure_optimizers(self) -> OptimizerLRScheduler:
-        optimizer = torch.optim.AdamW(self.parameters(), lr=3e-4, weight_decay=0.1)
-        scheduler_dict = self.lr_scheduler(optimizer)
-        return (
-            {'optimizer': optimizer, 'lr_scheduler': scheduler_dict}
-        )
+#     def configure_optimizers(self) -> OptimizerLRScheduler:
+#         optimizer = torch.optim.AdamW(self.parameters(), lr=3e-4, weight_decay=0.1)
+#         scheduler_dict = self.lr_scheduler(optimizer)
+#         return (
+#             {'optimizer': optimizer, 'lr_scheduler': scheduler_dict}
+#         )
 
 class ConfMatrixLogging(L.Callback):
     def __init__(self, cls) -> None:
