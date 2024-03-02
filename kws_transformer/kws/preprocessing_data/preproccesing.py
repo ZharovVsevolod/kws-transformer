@@ -46,7 +46,7 @@ DEFAULT_TRANSFORM = torch.nn.Sequential(
 )
 
 class SpeechCommandsData:
-    def __init__(self, path='.', train_bs=64, test_bs=256, val_bs=64, n_mels=64, hop_length=161):
+    def __init__(self, path='.', train_bs=64, test_bs=256, val_bs=64, n_mels=64, hop_length=161, debug_size=-1):
 
         # Setup transforms (separate for train, test and val if necessary)
         self.transform = torch.nn.Sequential(
@@ -116,11 +116,20 @@ class SpeechCommandsData:
             self.train_dataset.dataset._walker, temp_valtest = train_test_split(temp, test_size=0.2)
             # print("Ура, он закончился")
             del temp
+
+            if debug_size > 0:
+                self.train_dataset.dataset._walker = self.train_dataset.dataset._walker[:debug_size]
+
             print("Тренировочные данные: ", len(self.train_dataset.dataset._walker))
             # print("Процесс чуть полегче начался...")
             self.val_dataset.dataset._walker, self.test_dataset.dataset._walker = train_test_split(temp_valtest, test_size=0.5)
             # print("Ура, и он закончился")
             del temp_valtest
+
+            if debug_size > 0:
+                self.val_dataset.dataset._walker = self.val_dataset.dataset._walker[:debug_size]
+            
+            
             print("Валидационные данные: ", len(self.val_dataset.dataset._walker))
             print("Тестовые данные: ", len(self.test_dataset.dataset._walker))
 

@@ -1,0 +1,21 @@
+program: kws_transformer/train.py
+
+project: kws-transformer
+name: size_demo_check
+description: Check how large a dataset is required
+
+method: bayes
+
+metric:
+  name: val_loss
+  goal: minimize
+
+parameters:
+  data.dataset_size:
+    values: [200, 300, 400, 500, 600, 700, 800, 900, 1000, 1200, 1300, 1400, 1500]
+
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - ${args_no_hyphens}

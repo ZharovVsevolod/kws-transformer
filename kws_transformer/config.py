@@ -22,6 +22,7 @@ class Data:
     patch_size_freq: int
     n_mels: int
     hop_length: int
+    dataset_size: int
 
 @dataclass
 class Training:

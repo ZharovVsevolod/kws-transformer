@@ -110,13 +110,15 @@ from kws.preprocessing_data.preproccesing import SpeechCommandsData
 #         )
 
 class AudioDataModule(L.LightningDataModule):
-    def __init__(self, data_destination, batch_size, n_mels, hop_length) -> None:
+    def __init__(self, data_destination, batch_size, n_mels, hop_length, debug_size=-1) -> None:
         super().__init__()
 
         self.data_destination = data_destination
         self.batch_size = batch_size
         self.n_mels = n_mels
         self.hop_length = hop_length
+
+        self.debug_size = debug_size
     
     def prepare_data(self) -> None:
         self.sc_data = SpeechCommandsData(
@@ -125,7 +127,8 @@ class AudioDataModule(L.LightningDataModule):
             test_bs=self.batch_size, 
             val_bs=self.batch_size, 
             n_mels=self.n_mels,
-            hop_length=self.hop_length
+            hop_length=self.hop_length,
+            debug_size=self.debug_size
         )
         
     def setup(self, stage: str) -> None:

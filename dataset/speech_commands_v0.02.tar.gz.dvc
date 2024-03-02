@@ -1,0 +1,5 @@
+outs:
+- md5: 6b74f3901214cb2c2934e98196829835
+  size: 2428923189
+  hash: md5
+  path: speech_commands_v0.02.tar.gz

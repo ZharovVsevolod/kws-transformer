@@ -7,3 +7,5 @@
 /tests/__pycache__
 /tests/something.py
 /tests/for_app/__pycache__
+/wandb
+/kws_transformer/outputs
