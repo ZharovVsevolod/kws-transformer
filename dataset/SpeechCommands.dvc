@@ -1,6 +1,6 @@
 outs:
-- md5: dd64899022025d78e1c712d259c9911f.dir
-  size: 3348906094
-  nfiles: 106121
+- md5: 0bb9747fad5fb65be4ecb60afdc614c8.dir
+  size: 3346923476
+  nfiles: 106059
   hash: md5
   path: SpeechCommands
