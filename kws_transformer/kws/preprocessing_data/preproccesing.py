@@ -7,6 +7,8 @@ import shutil
 import glob
 from kws.preprocessing_data.utils import get_fileList, generate_background_files
 from sklearn.model_selection import train_test_split
+from typing import Literal
+from torch.utils.data import DataLoader
 
 KNOWN_COMMANDS = ["yes",
                   "no",
@@ -51,44 +53,51 @@ class SpeechCommandsData:
         # Setup transforms (separate for train, test and val if necessary)
         self.transform = torch.nn.Sequential(
             torchaudio.transforms.MelSpectrogram(sample_rate=16000, n_fft=320, hop_length=hop_length, n_mels=n_mels),
-            torchaudio.transforms.AmplitudeToDB(stype='power', top_db=80))
+            torchaudio.transforms.AmplitudeToDB(stype='power', top_db=80)
+        )
 
         self.train_transform = torch.nn.Sequential(
             torchaudio.transforms.MelSpectrogram(sample_rate=16000, n_fft=320, hop_length=hop_length, n_mels=n_mels),
             torchaudio.transforms.FrequencyMasking(freq_mask_param=int(n_mels*0.2)),
             torchaudio.transforms.TimeMasking(time_mask_param=int(0.2 * 16000/160)),
-            torchaudio.transforms.AmplitudeToDB(stype='power', top_db=80))
+            torchaudio.transforms.AmplitudeToDB(stype='power', top_db=80)
+        )
 
-        # Cleanup background files if needed
-        backgroundDir = os.path.join(path, 'SpeechCommands', 'speech_commands_v0.02', 'background')
-        if (os.path.isdir(backgroundDir)):
-            print('Found existing background directory. Removing files in that directory.')
-            shutil.rmtree(backgroundDir)
+        # # Cleanup background files if needed
+        # backgroundDir = os.path.join(path, 'SpeechCommands', 'speech_commands_v0.02', 'background')
+        # if (os.path.isdir(backgroundDir)):
+        #     print('Found existing background directory. Removing files in that directory.')
+        #     shutil.rmtree(backgroundDir)
 
         # Create separate datasets (or filelist iterators) for train, test and val
         print('Initialize/download SpeechCommandsDataset....\n')
-        self.train_dataset = SpeechCommandsDataset(path=path, transform=self.train_transform)
-        self.val_dataset = SpeechCommandsDataset(path=path, transform=self.transform)
-        self.test_dataset = SpeechCommandsDataset(path=path, transform=self.transform)
+        self.train_dataset = SpeechCommandsDataset(path=path, transform=self.train_transform, subset="training")
+        self.val_dataset = SpeechCommandsDataset(path=path, transform=self.transform, subset="validation")
+        self.test_dataset = SpeechCommandsDataset(path=path, transform=self.transform, subset="testing")
 
-        self.dataset_len = len(self.train_dataset)
-        print(f'SpeechCommands Dataset Size: {self.dataset_len}\n')
+        print("Длины датасетов с указанными субсетами")
+        print("Train: ", len(self.train_dataset))
+        print("Val: ", len(self.val_dataset))
+        print("Test: ", len(self.test_dataset))
+        print("-----")
+        # self.dataset_len = len(self.train_dataset)
+        # print(f'SpeechCommands Dataset Size: {self.dataset_len}\n')
 
         # Generate background files: creates files with 1 sec duration
-        self.background_fileList = generate_background_files(self.train_dataset.dataset._path)
-        print(f'Background files generated: {len(self.background_fileList)}\n')
+        # self.background_fileList = generate_background_files(self.train_dataset.dataset._path)
+        # print(f'Background files generated: {len(self.background_fileList)}\n')
 
         # Get validation and test file list from file
-        self.val_fileList = get_fileList(self.val_dataset.dataset._path, "validation_list.txt")
+        # self.val_fileList = get_fileList(self.val_dataset.dataset._path, "validation_list.txt")
         # print(len(self.val_fileList))
         # print(self.val_fileList[:5])
-        self.test_fileList = get_fileList(self.test_dataset.dataset._path, "testing_list.txt")
+        # self.test_fileList = get_fileList(self.test_dataset.dataset._path, "testing_list.txt")
         # print(len(self.test_fileList))
         # print(self.test_fileList[:5])
 
-        self.val_ratio = len(self.val_fileList) / self.dataset_len
-        self.test_ratio = len(self.test_fileList) / self.dataset_len
-        self.train_ratio = 1.0 - self.val_ratio - self.test_ratio
+        # self.val_ratio = len(self.val_dataset) / len(self.train_dataset)
+        # self.test_ratio = len(self.test_dataset) / len(self.train_dataset)
+        # self.train_ratio = 1.0 - self.val_ratio - self.test_ratio
 
         # # Filter out files: modify _walker
         # print(f'Extracting training dataset files...')
@@ -109,42 +118,42 @@ class SpeechCommandsData:
         # print(f'Test dataset extracted: {len(self.test_dataset)} files')
         
         # if len(self.val_dataset) == 0:
-        if True:
-            temp = self.train_dataset.dataset._walker
-            print("Общая выборка: ", len(temp))
-            # print("Самый тяжёлый процесс начался...")
-            self.train_dataset.dataset._walker, temp_valtest = train_test_split(temp, test_size=0.2)
-            # print("Ура, он закончился")
-            del temp
+        # if True:
+        #     temp = self.train_dataset.dataset._walker
+        #     print("Общая выборка: ", len(temp))
+        #     # print("Самый тяжёлый процесс начался...")
+        #     self.train_dataset.dataset._walker, temp_valtest = train_test_split(temp, test_size=0.2)
+        #     # print("Ура, он закончился")
+        #     del temp
 
-            if debug_size > 0:
-                self.train_dataset.dataset._walker = self.train_dataset.dataset._walker[:debug_size]
+        #     if debug_size > 0:
+        #         self.train_dataset.dataset._walker = self.train_dataset.dataset._walker[:debug_size]
 
-            print("Тренировочные данные: ", len(self.train_dataset.dataset._walker))
-            # print("Процесс чуть полегче начался...")
-            self.val_dataset.dataset._walker, self.test_dataset.dataset._walker = train_test_split(temp_valtest, test_size=0.5)
-            # print("Ура, и он закончился")
-            del temp_valtest
+        #     print("Тренировочные данные: ", len(self.train_dataset.dataset._walker))
+        #     # print("Процесс чуть полегче начался...")
+        #     self.val_dataset.dataset._walker, self.test_dataset.dataset._walker = train_test_split(temp_valtest, test_size=0.5)
+        #     # print("Ура, и он закончился")
+        #     del temp_valtest
 
-            if debug_size > 0:
-                self.val_dataset.dataset._walker = self.val_dataset.dataset._walker[:debug_size]
+        #     if debug_size > 0:
+        #         self.val_dataset.dataset._walker = self.val_dataset.dataset._walker[:debug_size]
             
             
-            print("Валидационные данные: ", len(self.val_dataset.dataset._walker))
-            print("Тестовые данные: ", len(self.test_dataset.dataset._walker))
+        #     print("Валидационные данные: ", len(self.val_dataset.dataset._walker))
+        #     print("Тестовые данные: ", len(self.test_dataset.dataset._walker))
 
-        # Add background files to walker
-        idx_train = int(self.train_ratio * len(self.background_fileList))
-        self.train_dataset.dataset._walker += self.background_fileList[:idx_train]
-        idx_val = idx_train + int(self.val_ratio * len(self.background_fileList))
-        self.val_dataset.dataset._walker += self.background_fileList[idx_train:idx_val]
-        idx_test = idx_val + int(self.test_ratio * len(self.background_fileList))
-        self.test_dataset.dataset._walker += self.background_fileList[idx_val:idx_test]
+        # # Add background files to walker
+        # idx_train = int(self.train_ratio * len(self.background_fileList))
+        # self.train_dataset.dataset._walker += self.background_fileList[:idx_train]
+        # idx_val = idx_train + int(self.val_ratio * len(self.background_fileList))
+        # self.val_dataset.dataset._walker += self.background_fileList[idx_train:idx_val]
+        # idx_test = idx_val + int(self.test_ratio * len(self.background_fileList))
+        # self.test_dataset.dataset._walker += self.background_fileList[idx_val:idx_test]
 
         # Create Dataloaders
-        self.train_loader = torch.utils.data.DataLoader(self.train_dataset, batch_size=train_bs, shuffle=True)
-        self.test_loader = torch.utils.data.DataLoader(self.test_dataset, batch_size=test_bs, shuffle=False)
-        self.val_loader = torch.utils.data.DataLoader(self.val_dataset, batch_size=val_bs, shuffle=False)
+        self.train_loader = DataLoader(self.train_dataset, batch_size=train_bs, shuffle=True)
+        self.test_loader = DataLoader(self.test_dataset, batch_size=test_bs, shuffle=False)
+        self.val_loader = DataLoader(self.val_dataset, batch_size=val_bs, shuffle=False)
 
 
 def preprocess_waveform(waveform, length=16000, transform=DEFAULT_TRANSFORM, padLR=False):
@@ -180,12 +189,13 @@ def preprocess_waveform(waveform, length=16000, transform=DEFAULT_TRANSFORM, pad
 #     return (X, label)
 
 class SpeechCommandsDataset(torch.utils.data.Dataset):
-    def __init__(self, path='.', transform=None):
+    def __init__(self, path = '.', transform = None, subset:Literal[None, "training", "validation", "testing"] = None):
         self.dataset = torchaudio.datasets.SPEECHCOMMANDS(
             path,
             url='speech_commands_v0.02',
             folder_in_archive='SpeechCommands',
-            download=True
+            download=True,
+            subset=subset
         )
         self.transform = transform
 

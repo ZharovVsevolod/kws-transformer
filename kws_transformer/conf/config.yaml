@@ -17,11 +17,11 @@ data:
   patch_size_freq: 8
   n_mels: 40
   hop_length: 161
-  dataset_size: 100
+  dataset_size: -1
 
 training:
   project_name: kws-transformer
-  train_name: new_era_2024_1
+  train_name: new_era_2024
   batch: 512
   lr: 3e-4
   epochs: 50

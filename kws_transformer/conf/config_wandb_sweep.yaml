@@ -4,7 +4,7 @@ project: kws-transformer
 name: size_demo_check
 description: Check how large a dataset is required
 
-method: bayes
+method: grid
 
 metric:
   name: val_loss

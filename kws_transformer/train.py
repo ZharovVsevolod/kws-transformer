@@ -1,6 +1,6 @@
 from kws.model import ViT_Lightning, ConfMatrixLogging
-from kws.data import AudioDataModule
-from kws.preprocessing_data.preproccesing import KNOWN_COMMANDS
+from kws.data import AudioDataModule, KNOWN_COMMANDS
+# from kws.preprocessing_data.preproccesing import KNOWN_COMMANDS
 
 import lightning as L
 from lightning.pytorch.loggers import WandbLogger
@@ -46,14 +46,7 @@ def main(cfg: Params) -> None:
         patience_reduce = cfg.scheduler_train.patience_reduce, 
         factor_reduce = cfg.scheduler_train.factor_reduce,
         lr_coef_cycle = cfg.scheduler_train.lr_coef_cycle, 
-        total_num_of_epochs = cfg.training.epochs,
-        # -----
-        # sample_rate = cfg.mfcc_settings.sample_rate, 
-        # n_mffc = cfg.mfcc_settings.n_mfcc, 
-        # n_mels = cfg.mfcc_settings.n_mels, 
-        # n_fft = cfg.mfcc_settings.n_fft, 
-        # hop_length=cfg.mfcc_settings.hop_length,
-        # previous_model = None
+        total_num_of_epochs = cfg.training.epochs
     )
 
     # model = ViT_Lightning.load_from_checkpoint("outputs/2023-12-19/13-26-05/weights/epoch=48-step=8134.ckpt")
