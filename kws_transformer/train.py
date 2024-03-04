@@ -1,6 +1,5 @@
 from kws.model import ViT_Lightning, ConfMatrixLogging
 from kws.data import AudioDataModule, KNOWN_COMMANDS
-# from kws.preprocessing_data.preproccesing import KNOWN_COMMANDS
 
 import lightning as L
 from lightning.pytorch.loggers import WandbLogger
@@ -10,6 +9,8 @@ from lightning.pytorch.callbacks import ModelCheckpoint, LearningRateMonitor, Ea
 import hydra
 from hydra.core.config_store import ConfigStore
 from config import Params
+
+import os
 
 cs = ConfigStore.instance()
 cs.store(name="params", node=Params)
@@ -23,7 +24,9 @@ def main(cfg: Params) -> None:
         batch_size=cfg.training.batch,
         n_mels=cfg.data.n_mels,
         hop_length=cfg.data.hop_length,
-        debug_size=cfg.data.dataset_size
+        debug_size=cfg.data.dataset_size,
+        more_background=cfg.data.more_background,
+        background=True
     )
     
     model = ViT_Lightning(
@@ -51,15 +54,16 @@ def main(cfg: Params) -> None:
 
     # model = ViT_Lightning.load_from_checkpoint("outputs/2023-12-19/13-26-05/weights/epoch=48-step=8134.ckpt")
 
+    os.mkdir(working_dir + cfg.training.wandb_path)
     wandb_log = WandbLogger(
         project=cfg.training.project_name, 
-        name=cfg.training.train_name, 
+        name=cfg.training.train_name + f"-{cfg.data.dataset_size}-{cfg.data.more_background}", 
         save_dir=working_dir + cfg.training.wandb_path
     )
 
     checkpoint = ModelCheckpoint(
         dirpath=working_dir + cfg.training.model_path,
-        filename="epoch_{epoch}-val_loss_{val_loss:.2f}-val_acc_{val_acc:.2f}",
+        filename="epoch_{epoch}-{val_loss:.2f}-{val_acc:.2f}",
         save_top_k=cfg.training.save_best_of,
         monitor=cfg.training.checkpoint_monitor
     )
@@ -70,6 +74,7 @@ def main(cfg: Params) -> None:
     trainer = L.Trainer(
         max_epochs=cfg.training.epochs,
         accelerator="auto",
+        log_every_n_steps=10,
         devices=1,
         logger=wandb_log,
         callbacks=[checkpoint, lr_monitor, conf_matrix_logger, early_stop],

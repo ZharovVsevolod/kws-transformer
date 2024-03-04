@@ -23,6 +23,7 @@ class Data:
     n_mels: int
     hop_length: int
     dataset_size: int
+    more_background: int
 
 @dataclass
 class Training:

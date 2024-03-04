@@ -251,7 +251,8 @@ class ViT_Lightning(L.LightningModule):
         # else:
         #     self.vit_model = previous_model
         
-        self.metric = MulticlassAccuracy(num_classes=num_classes)
+        self.metric = MulticlassAccuracy(num_classes=num_classes, average="weighted")
+        self.metric_without_background = MulticlassAccuracy(num_classes=num_classes, average="weighted", ignore_index=10)
         self.matrix = ConfusionMatrix(task = "multiclass", num_classes = num_classes)
         self.flag_cm = True
         self.num_classes = num_classes
@@ -337,6 +338,7 @@ class ViT_Lightning(L.LightningModule):
         
         self.log("train_loss", pred_loss)
         self.log("train_acc", self.metric(out, y))
+        self.log("train_acc_cut", self.metric_without_background(out, y))
         
         return pred_loss
     
@@ -353,6 +355,7 @@ class ViT_Lightning(L.LightningModule):
 
         self.log("val_loss", pred_loss)
         self.log("val_acc", self.metric(out, y))
+        self.log("val_acc_cut", self.metric_without_background(out, y))
         if self.flag_cm:
             self.conf_matrix = self.matrix(torch.softmax(out, dim=-1), y)
             self.flag_cm = False

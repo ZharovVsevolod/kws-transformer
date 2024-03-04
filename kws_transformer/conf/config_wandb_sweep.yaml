@@ -1,7 +1,7 @@
 program: kws_transformer/train.py
 
 project: kws-transformer
-name: size_demo_check
+name: background-8
 description: Check how large a dataset is required
 
 method: grid
@@ -12,7 +12,7 @@ metric:
 
 parameters:
   data.dataset_size:
-    values: [200, 300, 400, 500, 600, 700, 800, 900, 1000, 1200, 1300, 1400, 1500]
+    values: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
 
 command:
   - ${env}
